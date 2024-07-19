@@ -1,8 +1,9 @@
 ## Interface: 100207
-## Version: 1.0.0
 ## Title: Device Layout Preset
-## Notes: Automatically set the "Edit Mode" layout preset upon login on this device.
 ## Author: McTalian
+## Version: 1.0.0
+## Notes: Automatically set the "Edit Mode" layout preset upon login on this device.
+## X-GitHub: https://github.com/Mctalian/DeviceLayoutPreset
 ## SavedVariables: DeviceLayoutPresetDB
 ## IconTexture: Interface/AddOns/DeviceLayoutPreset/Icons/logo
 ## OptionalDeps: Ace3
