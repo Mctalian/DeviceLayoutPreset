@@ -1,0 +1,32 @@
+{
+  "Lua.diagnostics.globals": [
+    "InterfaceOptions_AddCategory",
+    "UIDropDownMenu_SetWidth",
+    "UIDropDownMenu_Initialize",
+    "UIDropDownMenu_SetText",
+    "EditModeManagerFrame",
+    "UIDropDownMenu_AddButton",
+    "UIDropDownMenu_CreateInfo",
+    "SlashCmdList",
+    "InterfaceOptionsFrame_OpenToCategory",
+    "ReloadUI",
+    "DEFAULT_CHAT_FRAME",
+    "SELECTED_CHAT_FRAME",
+    "NORMAL_FONT_COLOR",
+    "ACCEPT",
+    "CANCEL",
+    "Settings",
+    "hash_SlashCmdList",
+    "NORMAL_FONT_COLOR_CODE",
+    "FONT_COLOR_CODE_CLOSE",
+    "CLOSE",
+    "SetDesaturation",
+    "ColorPickerFrame",
+    "OpacitySliderFrame",
+    "OKAY",
+    "NOT_BOUND",
+    "IsSecureCmd",
+    "NUM_CHAT_WINDOWS",
+    "ChatEdit_GetActiveWindow"
+  ]
+}
