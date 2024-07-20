@@ -4,10 +4,11 @@
 $currentDirectory = Get-Location
 $licenseFile = Join-Path -Path $currentDirectory -ChildPath "LICENSE"
 $readmeFile = Join-Path -Path $currentDirectory -ChildPath "README.md"
-$sourceDirectory = Join-Path -Path $currentDirectory -ChildPath "DeviceLayoutPreset"
+$sourceDirectory = Join-Path -Path $currentDirectory -ChildPath "src"
+$addonDirectory = Join-Path -Path $sourceDirectory -ChildPath "DeviceLayoutPreset"
 $destinationZip = Join-Path -Path $currentDirectory -ChildPath "DeviceLayoutPreset.zip"
-$tempLicenseFile = Join-Path -Path $sourceDirectory -ChildPath "LICENSE"
-$tempReadmeFile = Join-Path -Path $sourceDirectory -ChildPath "README.md"
+$tempLicenseFile = Join-Path -Path $addonDirectory -ChildPath "LICENSE"
+$tempReadmeFile = Join-Path -Path $addonDirectory -ChildPath "README.md"
 #endregion: Variables
 
 #region: Zip cleanup
@@ -18,13 +19,13 @@ if (Test-Path $destinationZip) {
 
 #region: Include License and README.md files
 if (Test-Path $licenseFile) {
-  Copy-Item -Path $licenseFile -Destination $sourceDirectory -Force
+  Copy-Item -Path $licenseFile -Destination $addonDirectory -Force
 } else {
   Write-Warning "LICENSE file not found in the current directory."
 }
 
 if (Test-Path $readmeFile) {
-  Copy-Item -Path $readmeFile -Destination $sourceDirectory -Force
+  Copy-Item -Path $readmeFile -Destination $addonDirectory -Force
 } else {
   Write-Warning "README.md file not found in the current directory."
 }
