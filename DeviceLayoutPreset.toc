@@ -1,12 +1,15 @@
 ## Interface: 100207
 ## Title: Device Layout Preset
 ## Author: McTalian
-## Version: 1.0.0
+## Version: @project-version@
 ## Notes: Automatically set the "Edit Mode" layout preset upon login on this device.
-## X-GitHub: https://github.com/Mctalian/DeviceLayoutPreset
 ## SavedVariables: DeviceLayoutPresetDB
 ## IconTexture: Interface/AddOns/DeviceLayoutPreset/Icons/logo
 ## OptionalDeps: Ace3
+## X-GitHub: https://github.com/Mctalian/DeviceLayoutPreset
+## X-Curse-Project-ID: 1066901
+## X-WoWI-ID: 26777
+## X-Wago-ID: kGr0Ar6y
 
 Libs\LibStub\LibStub.lua
 Libs\AceAddon-3.0\AceAddon-3.0.xml
