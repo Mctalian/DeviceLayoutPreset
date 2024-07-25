@@ -1,7 +1,8 @@
-DLP = LibStub("AceAddon-3.0"):NewAddon("DeviceLayoutPreset", "AceConsole-3.0", "AceEvent-3.0")
+local addonName = "DeviceLayoutPreset"
+DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0")
 
 local options = {
-    name = "DeviceLayoutPreset",
+    name = addonName,
     handler = DLP,
     type = "group",
     args = {
@@ -49,7 +50,7 @@ function DLP:OnInitialize()
         self.db.global.presetIndexOnLogin = self.db.profile.presetIndexOnLogin
         self.db.global.migratedFromProfile = true
     end
-    LibStub("AceConfig-3.0"):RegisterOptionsTable("DeviceLayoutPreset", options)
+    LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     self.initialized = false
     self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
     self:RegisterChatCommand("dlp", "SlashCommand")
@@ -60,21 +61,15 @@ end
 function DLP:EDIT_MODE_LAYOUTS_UPDATED(eventName, layoutInfo, reconcileLayouts)
     layouts = EditModeManagerFrame:GetLayouts()
     self:InitializeOptions()
-    if self.db.global.presetIndexOnLogin == 0 or self.db.global.presetIndexOnLogin > table.getn(layouts) - 1 then
+    if self.db.global.presetIndexOnLogin == 0 or self.db.global.presetIndexOnLogin > table.getn(layouts) then
         self:Print("Visit the addon options (/dlp) to select the Edit Mode preset for this device")
         self.db.global.presetIndexOnLogin = 0
     else
-        self:Print(
-            "Configured to select Edit Mode preset \"" .. layouts[self.db.global.presetIndexOnLogin].layoutName ..
-                "\" on this device")
+        self:Print("Configured to select Edit Mode preset \"" .. layouts[self.db.global.presetIndexOnLogin].layoutName .. "\" on this device")
     end
     if self.db.global.presetIndexOnLogin > 0 then
         EditModeManagerFrame:SelectLayout(self.db.global.presetIndexOnLogin)
     end
-end
-
-function DLP:EDIT_MODE_LAYOUT_REMOVED(eventName, ...)
-    self:Print(eventName)
 end
 
 function DLP:InitializeOptions()
@@ -83,7 +78,7 @@ function DLP:InitializeOptions()
         options.args.preset.values[i] = l.layoutName
     end
     if self.optionsFrame == nil then
-        self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("DeviceLayoutPreset", "DeviceLayoutPreset")
+        self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
     end
 end
 
@@ -96,6 +91,5 @@ function DLP:GetPreset(info)
 end
 
 function DLP:SlashCommand(msg, editBox)
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
+    LibStub("AceConfigDialog-3.0"):Open(addonName)
 end
