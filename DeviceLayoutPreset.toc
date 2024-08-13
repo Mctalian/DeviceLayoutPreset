@@ -1,8 +1,8 @@
-## Interface: 110000
+## Interface: 110002
 ## Title: Device Layout Preset
 ## Author: McTalian
 ## Version: @project-version@
-## Notes: Automatically set the "Edit Mode" layout preset upon login on this device.
+## Notes: Automatically set the "Edit Mode" layout preset upon login on this device.|n|n|cffFFC700Slash command: /dlp, /deviceLayoutPreset|r
 ## SavedVariables: DeviceLayoutPresetDB
 ## IconTexture: Interface/AddOns/DeviceLayoutPreset/Icons/logo
 ## OptionalDeps: Ace3
@@ -11,12 +11,6 @@
 ## X-WoWI-ID: 26777
 ## X-Wago-ID: kGr0Ar6y
 
-Libs\LibStub\LibStub.lua
-Libs\AceAddon-3.0\AceAddon-3.0.xml
-Libs\AceEvent-3.0\AceEvent-3.0.xml
-Libs\AceDB-3.0\AceDB-3.0.xml
-Libs\AceConsole-3.0\AceConsole-3.0.xml
-Libs\AceGUI-3.0\AceGUI-3.0.xml
-Libs\AceConfig-3.0\AceConfig-3.0.xml
+embeds.xml
 
 Core.lua
