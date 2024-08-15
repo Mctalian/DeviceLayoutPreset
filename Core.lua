@@ -1,5 +1,5 @@
 local addonName = "DeviceLayoutPreset"
-DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0")
+DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
 local options = {
     name = addonName,
@@ -52,13 +52,35 @@ function DLP:OnInitialize()
     end
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     self.initialized = false
-    self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterChatCommand("dlp", "SlashCommand")
     self:RegisterChatCommand("devicelayoutpreset", "SlashCommand")
     self:RegisterChatCommand("deviceLayoutPreset", "SlashCommand")
 end
 
-function DLP:EDIT_MODE_LAYOUTS_UPDATED(eventName, layoutInfo, reconcileLayouts)
+function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
+    if not self.initialized then
+        self:CheckForEditMode()
+    end
+end
+
+local attempts = 0
+function DLP:CheckForEditMode()
+    if EditModeManagerFrame and EditModeManagerFrame.GetLayouts then
+        self:PopulateOptions()
+    else
+        if attempts <= 30 then
+            attempts = attempts + 1
+            -- Keep checking until it's available
+            self:ScheduleTimer("CheckForEditMode", 1)
+        else
+            self:Print("EditModeManagerFrame:GetLayouts was unavailable for > 30 seconds, could not retrieve list of layours")
+            self:Print("Please report this issue @ github: McTalian/DeviceLayoutPreset")
+        end
+    end
+end
+
+function DLP:PopulateOptions()
     layouts = EditModeManagerFrame:GetLayouts()
     self:InitializeOptions()
     if self.db.global.presetIndexOnLogin == 0 or self.db.global.presetIndexOnLogin > table.getn(layouts) then
@@ -70,6 +92,7 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(eventName, layoutInfo, reconcileLayouts)
     if self.db.global.presetIndexOnLogin > 0 then
         EditModeManagerFrame:SelectLayout(self.db.global.presetIndexOnLogin)
     end
+    self.initialized = true
 end
 
 function DLP:InitializeOptions()
