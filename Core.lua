@@ -66,7 +66,7 @@ end
 
 local attempts = 0
 function DLP:CheckForEditMode()
-    if EditModeManagerFrame and EditModeManagerFrame.GetLayouts then
+    if EditModeManagerFrame and EditModeManagerFrame.GetLayouts and EditModeManagerFrame:CanEnterEditMode() then
         self:PopulateOptions()
     else
         if attempts <= 30 then
