@@ -1,5 +1,5 @@
 local addonName = "DeviceLayoutPreset"
-DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
+DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0")
 
 local options = {
     name = addonName,
@@ -25,6 +25,9 @@ local options = {
             type = "select",
             name = "Preset to Load",
             desc = "The Edit Mode preset to load when logging in on this device.",
+            values = function()
+                return DLP:GetLayouts()
+            end,
             get = "GetPreset",
             set = "SetPreset",
             order = -1
@@ -51,55 +54,51 @@ function DLP:OnInitialize()
         self.db.global.migratedFromProfile = true
     end
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
-    self.initialized = false
-    self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:InitializeOptions()
+    self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+    self:SecureHook(C_EditMode, "OnLayoutDeleted", OnLayoutDeleted)
+    self:SecureHook(C_EditMode, "OnLayoutAdded", OnLayoutAdded)
     self:RegisterChatCommand("dlp", "SlashCommand")
     self:RegisterChatCommand("devicelayoutpreset", "SlashCommand")
     self:RegisterChatCommand("deviceLayoutPreset", "SlashCommand")
 end
 
-function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
-    if not self.initialized then
-        self:CheckForEditMode()
-    end
-end
-
-local attempts = 0
-function DLP:CheckForEditMode()
-    if EditModeManagerFrame and EditModeManagerFrame.GetLayouts and EditModeManagerFrame:CanEnterEditMode() then
-        self:PopulateOptions()
-    else
-        if attempts <= 30 then
-            attempts = attempts + 1
-            -- Keep checking until it's available
-            self:ScheduleTimer("CheckForEditMode", 1)
-        else
-            self:Print("EditModeManagerFrame:GetLayouts was unavailable for > 30 seconds, could not retrieve list of layours")
-            self:Print("Please report this issue @ github: McTalian/DeviceLayoutPreset")
-        end
-    end
-end
-
-function DLP:PopulateOptions()
+function DLP:EDIT_MODE_LAYOUTS_UPDATED(_, layoutInfo)
+    local desired = self.db.global.presetIndexOnLogin
     layouts = EditModeManagerFrame:GetLayouts()
-    self:InitializeOptions()
-    if self.db.global.presetIndexOnLogin == 0 or self.db.global.presetIndexOnLogin > table.getn(layouts) then
-        self:Print("Visit the addon options (/dlp) to select the Edit Mode preset for this device")
+    if layoutInfo.activeLayout == desired then
+        self:Print("Have a fun session!")
+    elseif desired <= 0 or desired > table.getn(layouts) then
+        self:Print("Visit the addon options (/dlp) to select the Edit Mode preset for this device.")
         self.db.global.presetIndexOnLogin = 0
     else
-        self:Print("Configured to select Edit Mode preset \"" .. layouts[self.db.global.presetIndexOnLogin].layoutName .. "\" on this device")
+        EditModeManagerFrame:SelectLayout(desired)
+        self:Print("Successfully loaded your device layout: \"" .. layouts[desired].layoutName .. "\" - Have a fun session!")
     end
-    if self.db.global.presetIndexOnLogin > 0 then
-        EditModeManagerFrame:SelectLayout(self.db.global.presetIndexOnLogin)
+    self:UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+end
+
+function DLP:OnLayoutDeleted(deletedIndex)
+    if deletedIndex == self.db.global.presetIndexOnLogin then
+        self:Print("Visit the addon options (/dlp) to select a new preset for this device.")
+        self.db.global.presetIndexOnLogin = 0
     end
-    self.initialized = true
+end
+
+function DLP:OnLayoutAdded()
+    self:Print("New layout detected! Visit the addon options (/dlp) to change your preset to your new layout.")
+end
+
+function DLP:GetLayouts()
+    layouts = EditModeManagerFrame:GetLayouts()
+    local values = {}
+    for i, l in ipairs(layouts) do
+        values[i] = l.layoutName
+    end
+    return values
 end
 
 function DLP:InitializeOptions()
-    options.args.preset.values = {}
-    for i, l in ipairs(layouts) do
-        options.args.preset.values[i] = l.layoutName
-    end
     if self.optionsFrame == nil then
         self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
     end
