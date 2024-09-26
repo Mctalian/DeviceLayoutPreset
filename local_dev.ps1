@@ -20,6 +20,8 @@ $addonName = Get-ChildItem -Path $scriptDirectory -Filter *.toc | Select-Object 
 $sourcePath = "$scriptDirectory\.release\$addonName"
 $destPath = "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\$addonName"
 
+Write-Host $sourcePath
+
 if (Test-Path $destPath) {
     Remove-Item $destPath -Recurse -Force
     Write-Host "Directory deleted: $destPath"

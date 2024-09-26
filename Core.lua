@@ -1,5 +1,9 @@
-local addonName = "DeviceLayoutPreset"
-DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0")
+local addonName, ns = ...
+local DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0",
+    "AceBucket-3.0")
+ns.DLP = DLP
+
+local acd = LibStub("AceConfigDialog-3.0")
 
 local options = {
     name = addonName,
@@ -11,15 +15,33 @@ local options = {
             name = "Automatically switch your UI layouts using Blizzard's \"Edit Mode\" when you play on multiple devices. It is a simple addon, but it gets the job done.",
             order = 0
         },
-        howToHeader = {
-            type = "header",
-            name = "How to Use",
-            order = 1
-        },
         howToDesc = {
-            type = "description",
-            name = "0. Have multiple Edit Mode presets, one for each device (i.e. Steam Deck, Laptop, PC, etc.)\n1. Install this addon on all of the devices you play on.\n2. Set the \"Preset to Load\" below to the layout you want for each device.\n\nNow when you play on your SteamDeck in the morning and your PC in the evening, you don't need to manually change the Edit Mode presets!",
-            order = 2
+            type = "group",
+            name = "How to Use",
+            inline = true,
+            args = {
+                step0 = {
+                    type = "description",
+                    name = "0. Have multiple Edit Mode presets, one for each device (i.e. Steam Deck, Laptop, PC, etc.)",
+                    order = 1
+                },
+                step1 = {
+                    type = "description",
+                    name = "1. Install this addon on all of the devices you play on.",
+                    order = 2
+                },
+                step2 = {
+                    type = "description",
+                    name = "2. Set the \"Preset to Load\" below to the layout you want for each device.",
+                    order = 3
+                },
+                conclusion = {
+                    type = "description",
+                    name = "\nNow when you play on your SteamDeck in the morning and your PC in the evening, you don't need to manually change the Edit Mode presets!",
+                    order = 4
+                }
+            },
+            order = 1
         },
         preset = {
             type = "select",
@@ -41,7 +63,8 @@ local defaults = {
     },
     global = {
         presetIndexOnLogin = 0,
-        migratedFromProfile = false
+        migratedFromProfile = false,
+        lastVersionLoaded = "v1.0.0"
     }
 }
 
@@ -55,7 +78,7 @@ function DLP:OnInitialize()
     end
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     self:InitializeOptions()
-    self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+    self.bucketHandle = self:RegisterBucketEvent("EDIT_MODE_LAYOUTS_UPDATED", 0.2, "EDIT_MODE_LAYOUTS_UPDATED")
     self:SecureHook(C_EditMode, "OnLayoutDeleted", OnLayoutDeleted)
     self:SecureHook(C_EditMode, "OnLayoutAdded", OnLayoutAdded)
     self:RegisterChatCommand("dlp", "SlashCommand")
@@ -63,19 +86,52 @@ function DLP:OnInitialize()
     self:RegisterChatCommand("deviceLayoutPreset", "SlashCommand")
 end
 
-function DLP:EDIT_MODE_LAYOUTS_UPDATED(_, layoutInfo)
+function dump(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k, v in pairs(o) do
+            if type(k) ~= 'number' then
+                k = '"' .. k .. '"'
+            end
+            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
+end
+
+local currentVersion = "@project-version@"
+function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
+    local layoutInfo = nil
+    for k, v in pairs(bucketedArgs) do
+        if k ~= nil then
+            layoutInfo = k
+            break
+        end
+    end
+
+    if layoutInfo == nil then
+        self:Print("There was an issue retrieving layoutInfo on startup, please report this issue on github @ McTalian/DeviceLayoutPreset")
+        return
+    end
+
     local desired = self.db.global.presetIndexOnLogin
     layouts = EditModeManagerFrame:GetLayouts()
-    if layoutInfo.activeLayout == desired then
-        self:Print("Have a fun session!")
-    elseif desired <= 0 or desired > table.getn(layouts) then
+    if desired <= 0 or desired > table.getn(layouts) then
         self:Print("Visit the addon options (/dlp) to select the Edit Mode preset for this device.")
         self.db.global.presetIndexOnLogin = 0
-    else
+    elseif layoutInfo.activeLayout ~= desired then
         EditModeManagerFrame:SelectLayout(desired)
         self:Print("Successfully loaded your device layout: \"" .. layouts[desired].layoutName .. "\" - Have a fun session!")
+    else
+        local isNewVersion = currentVersion ~= self.db.global.lastVersionLoaded
+        if isNewVersion then
+            self:Print("Welcome! Have a fun session! (" .. currentVersion .. ")")
+            self.db.global.lastVersionLoaded = currentVersion
+        end
     end
-    self:UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+    self:UnregisterBucket(self.bucketHandle)
 end
 
 function DLP:OnLayoutDeleted(deletedIndex)
@@ -100,7 +156,7 @@ end
 
 function DLP:InitializeOptions()
     if self.optionsFrame == nil then
-        self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
+        self.optionsFrame = acd:AddToBlizOptions(addonName, addonName)
     end
 end
 
@@ -113,5 +169,5 @@ function DLP:GetPreset(info)
 end
 
 function DLP:SlashCommand(msg, editBox)
-    LibStub("AceConfigDialog-3.0"):Open(addonName)
+    acd:Open(addonName)
 end
