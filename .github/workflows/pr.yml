@@ -107,11 +107,17 @@ jobs:
       - name: Capture Filenames
         id: capture-filenames
         run: |
-          echo "TEST_NOLIB_SIZE=$(stat -c%s "${{ steps.package.outputs.nolib-zip-path}}")" >> $GITHUB_OUTPUT
-          echo "TEST_LIBS_SIZE=$(stat -c%s "${{ steps.package.outputs.main-zip-path }}")" >> $GITHUB_OUTPUT
+          if [ -f "${{ steps.package.outputs.nolib-zip-path}}" ]; then
+            echo "TEST_NOLIB_SIZE=$(stat -c%s "${{ steps.package.outputs.nolib-zip-path}}")" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ -f "${{ steps.package.outputs.main-zip-path}}" ]; then
+            echo "TEST_LIBS_SIZE=$(stat -c%s "${{ steps.package.outputs.main-zip-path }}")" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload DeviceLayoutPreset ZIP
         uses: actions/upload-artifact@v4
+        if: ${{ steps.package.outputs.main-zip-path}}
         id: upload-zips-standard
         with:
           name: pr-pkg
@@ -119,6 +125,7 @@ jobs:
 
       - name: Upload DeviceLayoutPreset Nolib ZIP
         uses: actions/upload-artifact@v4
+        if: ${{ steps.package.outputs.nolib-zip-path}}
         id: upload-zips-nolib
         with:
           name: pr-pkg-nolib
