@@ -10,29 +10,44 @@ module.exports = async ({
 }) => {
   const commentIdentifier = "### Packaged ZIP files"; // Unique phrase to identify the comment
   const linkStandard = `[DeviceLayoutPreset ZIP (with libs)](${libsUrl})`;
-  const linkNolib = `[DeviceLayoutPreset ZIP (nolib)](${noLibUrl})`;
+  let linkNolib = `[DeviceLayoutPreset ZIP (nolib)](${noLibUrl})`;
+  if (!noLibUrl) {
+    linkNolib = "No nolib build available";
+  }
 
-  const standardSizeDeltaPct =
+  let standardText = linkStandard;
+  let noLibText = linkNolib;
+
+
+  if (latestReleaseStandardSize > 0) {
+    const standardSizeDeltaPct =
     ((testPkgStandardSize - latestReleaseStandardSize) /
       latestReleaseStandardSize) *
     100;
-  const standardSize = `(${latestReleaseStandardSize} ➡️ ${testPkgStandardSize}, ${standardSizeDeltaPct.toFixed(2)}%)`;
-  const noLibSizeDeltaPct =
-    ((testPkgNoLibSize - latestReleaseNoLibSize) / latestReleaseNoLibSize) *
-    100;
-  const noLibSize = `(${latestReleaseNoLibSize} ➡️ ${testPkgNoLibSize}, ${noLibSizeDeltaPct.toFixed(2)}%)`;
-  let stdSizeWarning = "";
-  if (standardSizeDeltaPct > 5) {
-    stdSizeWarning = "⚠️";
-  } else if (standardSizeDeltaPct < 0) {
-    stdSizeWarning = "🟢";
+    const standardSize = `(${latestReleaseStandardSize} ➡️ ${testPkgStandardSize}, ${standardSizeDeltaPct.toFixed(2)}%)`;
+
+    let stdSizeWarning = "";
+    if (standardSizeDeltaPct > 5) {
+      stdSizeWarning = "⚠️";
+    } else if (standardSizeDeltaPct < 0) {
+      stdSizeWarning = "🟢";
+    }
+    standardText = `${linkStandard} ${standardSize} ${stdSizeWarning}`;
   }
 
-  let noLibSizeWarning = "";
-  if (noLibSizeDeltaPct > 5) {
-    noLibSizeWarning = "⚠️";
-  } else if (noLibSizeDeltaPct < 0) {
-    noLibSizeWarning = "🟢";
+  if (latestReleaseNoLibSize > 0) {
+    const noLibSizeDeltaPct =
+      ((testPkgNoLibSize - latestReleaseNoLibSize) / latestReleaseNoLibSize) *
+      100;
+    const noLibSize = `(${latestReleaseNoLibSize} ➡️ ${testPkgNoLibSize}, ${noLibSizeDeltaPct.toFixed(2)}%)`;
+
+    let noLibSizeWarning = "";
+    if (noLibSizeDeltaPct > 5) {
+      noLibSizeWarning = "⚠️";
+    } else if (noLibSizeDeltaPct < 0) {
+      noLibSizeWarning = "🟢";
+    }
+    noLibText = `${linkNolib} ${noLibSize} ${noLibSizeWarning}`;
   }
 
   const lastUpdated = new Date().toLocaleString("en-US", {
@@ -40,8 +55,8 @@ module.exports = async ({
     hour12: true,
   });
   const commentBody = `
-${linkStandard} ${standardSize} ${stdSizeWarning}
-${linkNolib} ${noLibSize} ${noLibSizeWarning}
+${standardText}
+${noLibText}
 
 Last Updated: ${lastUpdated} (UTC)
 `;

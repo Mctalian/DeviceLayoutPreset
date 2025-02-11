@@ -87,8 +87,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           nolib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith("nolib.zip")) | .size')
+          if [ -z "$nolib_size" ]; then
+            nolib_size=0
+          fi
           echo "NoLibSize: $nolib_size"
           lib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith(".zip")) | select(.name | contains("-nolib") | not) | .size')
+          if [ -z "$lib_size" ]; then
+            lib_size=0
+          fi
           echo "LibSize: $lib_size"
           echo "LATEST_RELEASE_NOLIB_SIZE=$nolib_size" >> $GITHUB_OUTPUT
           echo "LATEST_RELEASE_LIBS_SIZE=$lib_size" >> $GITHUB_OUTPUT
@@ -109,10 +115,14 @@ jobs:
         run: |
           if [ -f "${{ steps.package.outputs.nolib-zip-path}}" ]; then
             echo "TEST_NOLIB_SIZE=$(stat -c%s "${{ steps.package.outputs.nolib-zip-path}}")" >> $GITHUB_OUTPUT
+          else
+            echo "TEST_NOLIB_SIZE=0" >> $GITHUB_OUTPUT
           fi
           
           if [ -f "${{ steps.package.outputs.main-zip-path}}" ]; then
             echo "TEST_LIBS_SIZE=$(stat -c%s "${{ steps.package.outputs.main-zip-path }}")" >> $GITHUB_OUTPUT
+          else
+            echo "TEST_LIBS_SIZE=0" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload DeviceLayoutPreset ZIP
@@ -133,6 +143,7 @@ jobs:
 
       - name: Post PR comment
         uses: actions/github-script@v7
+        if: ${{ steps['upload-zips-standard'].outputs.artifact-url }} || ${{ steps['upload-zips-nolib'].outputs.artifact-url }}
         with:
           script: |
             const script = require('./.scripts/post-pkg-comment.cjs');
