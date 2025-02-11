@@ -100,7 +100,7 @@ jobs:
 
       - name: Package
         id: package
-        uses: McTalian/wow-build-tools@v1.0.0-alpha.11
+        uses: McTalian/wow-build-tools@v1.0.0-alpha.12
         with:
           args: -d
 
@@ -144,7 +144,7 @@ jobs:
               latestReleaseStandardSize: ${{ steps['fetch-release-assets'].outputs.LATEST_RELEASE_LIBS_SIZE }},
               testPkgStandardSize: ${{ steps['capture-filenames'].outputs.TEST_LIBS_SIZE }},
               latestReleaseNoLibSize: ${{ steps['fetch-release-assets'].outputs.LATEST_RELEASE_NOLIB_SIZE }},
-              testPkgNoLibSize: ${{ steps['capture-filenames'].outputs.TEST_NOLIB_SIZE }},
+              testPkgNoLibSize: ${{ steps['capture-filenames'].outputs.TEST_NOLIB_SIZE }}
             });
 
   # commitlint:
