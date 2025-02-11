@@ -99,7 +99,7 @@ jobs:
           version: test_package_apt_cache
 
       - name: Package
-        uses: McTalian/wow-build-tools@v1.0.0-alpha.6
+        uses: McTalian/wow-build-tools@v1.0.0-alpha.7
         with:
           args: -d
 
