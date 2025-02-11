@@ -13,3 +13,4 @@ externals:
 
 ignore:
   - README.md
+  - "*.ps1"
