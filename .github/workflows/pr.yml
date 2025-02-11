@@ -57,7 +57,7 @@ jobs:
   #         luarocksVersion: 3.11.1
 
   #     - name: Install luarock dependencies
-  #       run: luarocks make --local rpglootfeed-1-1.rockspec
+  #       run: luarocks make --local DeviceLayoutPreset-1-1.rockspec
 
   #     - name: Run Tests
   #       run: make test-ci
@@ -99,38 +99,30 @@ jobs:
           version: test_package_apt_cache
 
       - name: Package
-        uses: McTalian/wow-build-tools@v1.0.0-alpha.10
+        id: package
+        uses: McTalian/wow-build-tools@v1.0.0-alpha.11
         with:
           args: -d
 
       - name: Capture Filenames
         id: capture-filenames
         run: |
-          FILE1=$(ls .release/RPGLootFeed-*-nolib.zip)
-          FILE2=$(ls .release/RPGLootFeed-*.zip | grep -v 'nolib')
-          echo "FILE1=$FILE1" >> $GITHUB_OUTPUT
-          echo "FILE2=$FILE2" >> $GITHUB_OUTPUT
-          echo "TEST_NOLIB_SIZE=$(stat -c%s "$FILE1")" >> $GITHUB_OUTPUT
-          echo "TEST_LIBS_SIZE=$(stat -c%s "$FILE2")" >> $GITHUB_OUTPUT
+          echo "TEST_NOLIB_SIZE=$(stat -c%s "${{ steps.package.outputs.nolib-zip-path}}")" >> $GITHUB_OUTPUT
+          echo "TEST_LIBS_SIZE=$(stat -c%s "${{ steps.package.outputs.main-zip-path }}")" >> $GITHUB_OUTPUT
 
-      - name: Upload RPGLootFeed ZIP
+      - name: Upload DeviceLayoutPreset ZIP
         uses: actions/upload-artifact@v4
         id: upload-zips-standard
-        env:
-          FILE1: ${{ steps.capture-filenames.outputs.FILE1 }}
-          FILE2: ${{ steps.capture-filenames.outputs.FILE2 }}
         with:
           name: pr-pkg
-          path: ${{ env.FILE2 }}
+          path: ${{ steps.package.outputs.main-zip-path}}
 
-      - name: Upload RPGLootFeed Nolib ZIP
+      - name: Upload DeviceLayoutPreset Nolib ZIP
         uses: actions/upload-artifact@v4
         id: upload-zips-nolib
-        env:
-          FILE1: ${{ steps.capture-filenames.outputs.FILE1 }}
         with:
           name: pr-pkg-nolib
-          path: ${{ env.FILE1 }}
+          path: ${{ steps.package.outputs.nolib-zip-path}}
 
       - name: Post PR comment
         uses: actions/github-script@v7
