@@ -106,7 +106,7 @@ jobs:
 
       - name: Package
         id: package
-        uses: McTalian/wow-build-tools@v1.0.0-alpha.15
+        uses: McTalian/wow-build-tools@v1.0.0-alpha.16
         with:
           args: -d
 
