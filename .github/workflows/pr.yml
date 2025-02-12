@@ -99,14 +99,9 @@ jobs:
           echo "LATEST_RELEASE_NOLIB_SIZE=$nolib_size" >> $GITHUB_OUTPUT
           echo "LATEST_RELEASE_LIBS_SIZE=$lib_size" >> $GITHUB_OUTPUT
 
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: subversion
-          version: test_package_apt_cache
-
       - name: Package
         id: package
-        uses: McTalian/wow-build-tools@064c990a0c1af7fc57aa350321f44c62c5d995f7
+        uses: McTalian/wow-build-tools@b3961959e75d130f0e07803b780091a9535c53f8
         with:
           args: -d
 
