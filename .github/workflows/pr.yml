@@ -101,7 +101,7 @@ jobs:
 
       - name: Package
         id: package
-        uses: McTalian/wow-build-tools@6deffb43c9b5253782c68309c2cf4df45f350786
+        uses: McTalian/wow-build-tools@6f607201d85d5018ce5e2d6e3b0f46abcb71a808
         with:
           args: -d -g badbadbad
 
