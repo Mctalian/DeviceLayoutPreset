@@ -103,7 +103,7 @@ jobs:
         id: package
         uses: McTalian/wow-build-tools@6deffb43c9b5253782c68309c2cf4df45f350786
         with:
-          args: -d
+          args: -d -g badbadbad
 
       - name: Capture Filenames
         id: capture-filenames
