@@ -101,9 +101,9 @@ jobs:
 
       - name: Package
         id: package
-        uses: McTalian/wow-build-tools@6f607201d85d5018ce5e2d6e3b0f46abcb71a808
+        uses: McTalian/wow-build-tools@3ed476e40ba72a8a47c4be78eed7f04a5dbeff64
         with:
-          args: -d
+          args: -d -V
 
       - name: Capture Filenames
         id: capture-filenames
