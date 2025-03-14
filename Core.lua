@@ -1,8 +1,15 @@
 local addonName, ns = ...
+
+---@class DLP_ns
+local G_DLP = ns
+
+---@class DeviceLayoutPreset: AceAddon, AceConsole-3.0, AceEvent-3.0, AceTimer-3.0, AceHook-3.0, AceBucket-3.0
 local DLP = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceHook-3.0",
     "AceBucket-3.0")
-ns.DLP = DLP
 
+G_DLP.DLP = DLP
+
+---@type AceConfigDialog-3.0
 local acd = LibStub("AceConfigDialog-3.0")
 
 local options = {
@@ -12,32 +19,32 @@ local options = {
     args = {
         desc = {
             type = "description",
-            name = "Automatically switch your UI layouts using Blizzard's \"Edit Mode\" when you play on multiple devices. It is a simple addon, but it gets the job done.",
+            name = G_DLP.L["OPTIONS_DESC"],
             order = 0
         },
         howToDesc = {
             type = "group",
-            name = "How to Use",
+            name = G_DLP.L["OPTIONS_HOWTO_NAME"],
             inline = true,
             args = {
                 step0 = {
                     type = "description",
-                    name = "0. Have multiple Edit Mode presets, one for each device (i.e. Steam Deck, Laptop, PC, etc.)",
+                    name = G_DLP.L["OPTIONS_HOWTO_STEP0"],
                     order = 1
                 },
                 step1 = {
                     type = "description",
-                    name = "1. Install this addon on all of the devices you play on.",
+                    name = G_DLP.L["OPTIONS_HOWTO_STEP1"],
                     order = 2
                 },
                 step2 = {
                     type = "description",
-                    name = "2. Set the \"Preset to Load\" below to the layout you want for each device.",
+                    name = G_DLP.L["OPTIONS_HOWTO_STEP2"],
                     order = 3
                 },
                 conclusion = {
                     type = "description",
-                    name = "\nNow when you play on your SteamDeck in the morning and your PC in the evening, you don't need to manually change the Edit Mode presets!",
+                    name = G_DLP.L["OPTIONS_HOWTO_CONCLUSION"],
                     order = 4
                 }
             },
@@ -45,8 +52,8 @@ local options = {
         },
         preset = {
             type = "select",
-            name = "Preset to Load",
-            desc = "The Edit Mode preset to load when logging in on this device.",
+            name = G_DLP.L["OPTIONS_PRESET_NAME"],
+            desc = G_DLP.L["OPTIONS_PRESET_DESC"],
             values = function()
                 return DLP:GetLayouts()
             end,
@@ -58,12 +65,8 @@ local options = {
 }
 
 local defaults = {
-    profile = {
-        presetIndexOnLogin = 0 -- DEPRECATED
-    },
     global = {
         presetIndexOnLogin = 0,
-        migratedFromProfile = false,
         lastVersionLoaded = "v1.0.0"
     }
 }
@@ -72,35 +75,17 @@ local layouts = nil
 
 function DLP:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("DeviceLayoutPresetDB", defaults, true)
-    if not self.db.global.migratedFromProfile then
-        self.db.global.presetIndexOnLogin = self.db.profile.presetIndexOnLogin
-        self.db.global.migratedFromProfile = true
-    end
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     self:InitializeOptions()
     self.bucketHandle = self:RegisterBucketEvent("EDIT_MODE_LAYOUTS_UPDATED", 0.2, "EDIT_MODE_LAYOUTS_UPDATED")
-    self:SecureHook(C_EditMode, "OnLayoutDeleted", OnLayoutDeleted)
-    self:SecureHook(C_EditMode, "OnLayoutAdded", OnLayoutAdded)
+    self:SecureHook(C_EditMode, "OnLayoutDeleted", "OnLayoutDeleted")
+    self:SecureHook(C_EditMode, "OnLayoutAdded", "OnLayoutAdded")
     self:RegisterChatCommand("dlp", "SlashCommand")
     self:RegisterChatCommand("devicelayoutpreset", "SlashCommand")
     self:RegisterChatCommand("deviceLayoutPreset", "SlashCommand")
 end
 
-function dump(o)
-    if type(o) == 'table' then
-        local s = '{ '
-        for k, v in pairs(o) do
-            if type(k) ~= 'number' then
-                k = '"' .. k .. '"'
-            end
-            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
-        end
-        return s .. '} '
-    else
-        return tostring(o)
-    end
-end
-
+local repoUrl = "https://github.com/McTalian/DeviceLayoutPreset"
 local currentVersion = "@project-version@"
 function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     local layoutInfo = nil
@@ -112,22 +97,22 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     end
 
     if layoutInfo == nil then
-        self:Print("There was an issue retrieving layoutInfo on startup, please report this issue on github @ McTalian/DeviceLayoutPreset")
+        self:Printf("%s @ %s", G_DLP.L["ERROR_NO_LAYOUT_INFO"], repoUrl)
         return
     end
 
     local desired = self.db.global.presetIndexOnLogin
     layouts = EditModeManagerFrame:GetLayouts()
-    if desired <= 0 or desired > table.getn(layouts) then
-        self:Print("Visit the addon options (/dlp) to select the Edit Mode preset for this device.")
+    if desired <= 0 or desired > #layouts then
+        self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
         self.db.global.presetIndexOnLogin = 0
     elseif layoutInfo.activeLayout ~= desired then
         EditModeManagerFrame:SelectLayout(desired)
-        self:Print("Successfully loaded your device layout: \"" .. layouts[desired].layoutName .. "\" - Have a fun session!")
+        self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], layouts[desired].layoutName)
     else
         local isNewVersion = currentVersion ~= self.db.global.lastVersionLoaded
         if isNewVersion then
-            self:Print("Welcome! Have a fun session! (" .. currentVersion .. ")")
+            self:Printf(G_DLP.L["WELCOME_NEW_VERSION"], currentVersion)
             self.db.global.lastVersionLoaded = currentVersion
         end
     end
@@ -136,13 +121,13 @@ end
 
 function DLP:OnLayoutDeleted(deletedIndex)
     if deletedIndex == self.db.global.presetIndexOnLogin then
-        self:Print("Visit the addon options (/dlp) to select a new preset for this device.")
+        self:Print(G_DLP.L["EVENT_DELETED_LAYOUT"])
         self.db.global.presetIndexOnLogin = 0
     end
 end
 
 function DLP:OnLayoutAdded()
-    self:Print("New layout detected! Visit the addon options (/dlp) to change your preset to your new layout.")
+    self:Print(G_DLP.L["EVENT_CREATED_LAYOUT"])
 end
 
 function DLP:GetLayouts()
