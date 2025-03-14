@@ -59,7 +59,36 @@ local options = {
             end,
             get = "GetPreset",
             set = "SetPreset",
-            order = -1
+            disabled = function()
+                return DLP.db.char.specs.enabled
+            end,
+            order = 2,
+        },
+        specs = {
+            type = "group",
+            name = G_DLP.L["OPTIONS_SPECS_NAME"],
+            inline = true,
+            args = {
+                desc = {
+                    type = "description",
+                    name = G_DLP.L["OPTIONS_SPECS_DESC"],
+                    order = 1
+                },
+                enable = {
+                    type = "toggle",
+                    name = G_DLP.L["OPTIONS_SPECS_ENABLE"],
+                    desc = G_DLP.L["OPTIONS_SPECS_ENABLE_DESC"],
+                    width = "full",
+                    get = function()
+                        return DLP.db.char.specs.enabled
+                    end,
+                    set = function(info, value)
+                        DLP.db.char.specs.enabled = value
+                    end,
+                    order = 2
+                }
+            },
+            order = 3
         }
     }
 }
@@ -68,16 +97,25 @@ local defaults = {
     global = {
         presetIndexOnLogin = 0,
         lastVersionLoaded = "v1.0.0"
-    }
+    },
+    char = {
+        specs = {
+            enabled = false,
+        }
+    },
 }
 
 local layouts = nil
+local repoUrl = "https://github.com/McTalian/DeviceLayoutPreset"
+local currentVersion = "@project-version@"
 
 function DLP:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("DeviceLayoutPresetDB", defaults, true)
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     self:InitializeOptions()
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self.bucketHandle = self:RegisterBucketEvent("EDIT_MODE_LAYOUTS_UPDATED", 0.2, "EDIT_MODE_LAYOUTS_UPDATED")
+    self:RegisterBucketEvent("PLAYER_SPECIALIZATION_CHANGED", 0.2)
     self:SecureHook(C_EditMode, "OnLayoutDeleted", "OnLayoutDeleted")
     self:SecureHook(C_EditMode, "OnLayoutAdded", "OnLayoutAdded")
     self:RegisterChatCommand("dlp", "SlashCommand")
@@ -85,8 +123,6 @@ function DLP:OnInitialize()
     self:RegisterChatCommand("deviceLayoutPreset", "SlashCommand")
 end
 
-local repoUrl = "https://github.com/McTalian/DeviceLayoutPreset"
-local currentVersion = "@project-version@"
 function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     local layoutInfo = nil
     for k, v in pairs(bucketedArgs) do
@@ -102,13 +138,21 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     end
 
     local desired = self.db.global.presetIndexOnLogin
+    local type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
+    if self.db.char.specs.enabled then
+        local specId = PlayerUtil.GetCurrentSpecID()
+        if self.db.char.specs[specId] ~= nil then
+            desired = self.db.char.specs[specId]
+            type = G_DLP.L["LAYOUT_TYPE_SPEC"]
+        end
+    end
     layouts = EditModeManagerFrame:GetLayouts()
     if desired <= 0 or desired > #layouts then
         self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
         self.db.global.presetIndexOnLogin = 0
     elseif layoutInfo.activeLayout ~= desired then
         EditModeManagerFrame:SelectLayout(desired)
-        self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], layouts[desired].layoutName)
+        self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], type, layouts[desired].layoutName)
     else
         local isNewVersion = currentVersion ~= self.db.global.lastVersionLoaded
         if isNewVersion then
@@ -119,15 +163,90 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     self:UnregisterBucket(self.bucketHandle)
 end
 
+function DLP:PLAYER_SPECIALIZATION_CHANGED()
+    if not self.db.char.specs.enabled then
+        return
+    end
+    local type = G_DLP.L["LAYOUT_TYPE_SPEC"]
+    local specId = PlayerUtil.GetCurrentSpecID()
+    if self.db.char.specs[specId] == nil then
+        self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
+        self.db.char.specs[specId] = 0
+        return
+    end
+    layouts = EditModeManagerFrame:GetLayouts()
+    local desired = self.db.char.specs[specId]
+    if desired <= 0 or desired > #layouts then
+        self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
+        self.db.char.specs[specId] = 0
+    else
+        EditModeManagerFrame:SelectLayout(desired)
+        self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], type, layouts[desired].layoutName)
+    end
+end
+
+---@class Spec
+---@field specId number
+---@field specName string
+---@field specDesc string
+---@field specIcon number
+---@field specRole string
+---@field specPrimaryStat number
+
+function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
+    local numSpecs = GetNumSpecializations()
+    ---@type table<number, Spec>
+    self.specs = {}
+    for i = 1, numSpecs do
+        local specID, specName, specDesc, specIcon, specRole, specPrimaryStat = GetSpecializationInfo(i)
+        self.specs[specID] = {
+            specId = specID,
+            specName = specName,
+            specDesc = specDesc,
+            specIcon = specIcon,
+            specRole = specRole,
+            specPrimaryStat = specPrimaryStat
+        }
+    end
+
+    local i = 0
+    for k, v in pairs(self.specs) do
+        i = i + 1
+        options.args.specs.args["spec" .. k] = {
+            type = "select",
+            name = v.specName,
+            desc = v.specDesc,
+            icon = v.specIcon,
+            disabled = function()
+                return not DLP.db.char.specs.enabled
+            end,
+            values = function()
+                return DLP:GetLayouts()
+            end,
+            get = function()
+                return DLP.db.char.specs[k]
+            end,
+            set = function(info, value)
+                DLP.db.char.specs[k] = value
+            end,
+            order = 2 + i
+        }
+    end
+
+    LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+end
+
 function DLP:OnLayoutDeleted(deletedIndex)
     if deletedIndex == self.db.global.presetIndexOnLogin then
         self:Print(G_DLP.L["EVENT_DELETED_LAYOUT"])
         self.db.global.presetIndexOnLogin = 0
     end
+    LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
 end
 
 function DLP:OnLayoutAdded()
     self:Print(G_DLP.L["EVENT_CREATED_LAYOUT"])
+    LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
 end
 
 function DLP:GetLayouts()
@@ -141,7 +260,7 @@ end
 
 function DLP:InitializeOptions()
     if self.optionsFrame == nil then
-        self.optionsFrame = acd:AddToBlizOptions(addonName, addonName)
+        self.optionsFrame = acd:AddToBlizOptions(addonName)
     end
 end
 

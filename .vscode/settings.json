@@ -27,7 +27,8 @@
     "NOT_BOUND",
     "IsSecureCmd",
     "NUM_CHAT_WINDOWS",
-    "ChatEdit_GetActiveWindow"
+    "ChatEdit_GetActiveWindow",
+    "PlayerUtil"
   ],
   "Lua.runtime.version": "Lua 5.1",
   "Lua.runtime.builtin": {
