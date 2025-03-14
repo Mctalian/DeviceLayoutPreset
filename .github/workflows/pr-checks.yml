@@ -38,11 +38,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          nolib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith("nolib.zip")) | .size')
-          echo "NoLibSize: $nolib_size"
+          # nolib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith("nolib.zip")) | .size')
+          # echo "NoLibSize: $nolib_size"
           lib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith(".zip")) | select(.name | contains("-nolib") | not) | .size')
           echo "LibSize: $lib_size"
-          echo "LATEST_RELEASE_NOLIB_SIZE=$nolib_size" >> $GITHUB_OUTPUT
+          # echo "LATEST_RELEASE_NOLIB_SIZE=$nolib_size" >> $GITHUB_OUTPUT
           echo "LATEST_RELEASE_LIBS_SIZE=$lib_size" >> $GITHUB_OUTPUT
 
       - uses: awalsh128/cache-apt-pkgs-action@latest
@@ -65,11 +65,11 @@ jobs:
       - name: Capture Filenames
         id: capture-filenames
         run: |
-          FILE1=$(ls .release/DeviceLayoutPreset-*-nolib.zip)
+          # FILE1=$(ls .release/DeviceLayoutPreset-*-nolib.zip)
           FILE2=$(ls .release/DeviceLayoutPreset-*.zip | grep -v 'nolib')
-          echo "NOLIBZIP=$FILE1" >> $GITHUB_OUTPUT
+          # echo "NOLIBZIP=$FILE1" >> $GITHUB_OUTPUT
           echo "ZIP=$FILE2" >> $GITHUB_OUTPUT
-          echo "TEST_NOLIB_SIZE=$(stat -c%s "$FILE1")" >> $GITHUB_OUTPUT
+          # echo "TEST_NOLIB_SIZE=$(stat -c%s "$FILE1")" >> $GITHUB_OUTPUT
           echo "TEST_LIBS_SIZE=$(stat -c%s "$FILE2")" >> $GITHUB_OUTPUT
 
       - name: Upload DeviceLayoutPreset ZIP
@@ -79,12 +79,12 @@ jobs:
           name: pr-pkg
           path: ${{ steps.capture-filenames.outputs.ZIP }}
 
-      - name: Upload DeviceLayoutPreset Nolib ZIP
-        uses: actions/upload-artifact@v4
-        id: upload-zips-nolib
-        with:
-          name: pr-pkg-nolib
-          path: ${{ steps.capture-filenames.outputs.NOLIBZIP }}
+      # - name: Upload DeviceLayoutPreset Nolib ZIP
+      #   uses: actions/upload-artifact@v4
+      #   id: upload-zips-nolib
+      #   with:
+      #     name: pr-pkg-nolib
+      #     path: ${{ steps.capture-filenames.outputs.NOLIBZIP }}
 
       - name: Post PR comment
         if: env.IS_FORK == 'false'
@@ -96,12 +96,27 @@ jobs:
               github,
               context,
               libsUrl: "${{ steps.upload-zips-standard.outputs.artifact-url }}",
-              noLibUrl: "${{ steps.upload-zips-nolib.outputs.artifact-url }}",
               latestReleaseStandardSize: ${{ steps.fetch-release-assets.outputs.LATEST_RELEASE_LIBS_SIZE }},
-              testPkgStandardSize: ${{ steps.capture-filenames.outputs.TEST_LIBS_SIZE }},
-              latestReleaseNoLibSize: ${{ steps.fetch-release-assets.outputs.LATEST_RELEASE_NOLIB_SIZE }},
-              testPkgNoLibSize: ${{ steps.capture-filenames.outputs.TEST_NOLIB_SIZE }},
+              testPkgStandardSize: ${{ steps.capture-filenames.outputs.TEST_LIBS_SIZE }}
             });
+
+      # No lib version
+      # - name: Post PR comment
+      #   if: env.IS_FORK == 'false'
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       const script = require('./.scripts/post-pkg-comment.cjs');
+      #       await script({
+      #         github,
+      #         context,
+      #         libsUrl: "${{ steps.upload-zips-standard.outputs.artifact-url }}",
+      #         noLibUrl: "${{ steps.upload-zips-nolib.outputs.artifact-url }}",
+      #         latestReleaseStandardSize: ${{ steps.fetch-release-assets.outputs.LATEST_RELEASE_LIBS_SIZE }},
+      #         testPkgStandardSize: ${{ steps.capture-filenames.outputs.TEST_LIBS_SIZE }},
+      #         latestReleaseNoLibSize: ${{ steps.fetch-release-assets.outputs.LATEST_RELEASE_NOLIB_SIZE }},
+      #         testPkgNoLibSize: ${{ steps.capture-filenames.outputs.TEST_NOLIB_SIZE }}, */
+      #       });
 
   commitlint:
     runs-on: ubuntu-latest
