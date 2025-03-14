@@ -1,0 +1,156 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    types:
+      - checks_requested
+
+permissions: {}
+
+jobs:
+  test_package:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+    permissions:
+      contents: read
+      actions: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        if: env.IS_FORK == 'false'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Checkout code (fork)
+        if: env.IS_FORK == 'true'
+        uses: actions/checkout@v4
+
+      - name: Fetch Latest Release Assets
+        id: fetch-release-assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          nolib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith("nolib.zip")) | .size')
+          echo "NoLibSize: $nolib_size"
+          lib_size=$(gh release view --json assets -q '.assets[] | select(.name | endswith(".zip")) | select(.name | contains("-nolib") | not) | .size')
+          echo "LibSize: $lib_size"
+          echo "LATEST_RELEASE_NOLIB_SIZE=$nolib_size" >> $GITHUB_OUTPUT
+          echo "LATEST_RELEASE_LIBS_SIZE=$lib_size" >> $GITHUB_OUTPUT
+
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: subversion
+          version: test_package_apt_cache
+
+      - name: Package
+        if: env.IS_FORK == 'false'
+        uses: McTalian/wow-build-tools@v1-beta
+        with:
+          args: -d --skipChangelog
+
+      - name: Package (fork)
+        if: env.IS_FORK == 'true'
+        uses: McTalian/wow-build-tools@v1-beta
+        with:
+          args: -d --skipChangelog -n {package-name}-pr${{github.event.number}}-{nolib}{classic}
+
+      - name: Capture Filenames
+        id: capture-filenames
+        run: |
+          FILE1=$(ls .release/DeviceLayoutPreset-*-nolib.zip)
+          FILE2=$(ls .release/DeviceLayoutPreset-*.zip | grep -v 'nolib')
+          echo "NOLIBZIP=$FILE1" >> $GITHUB_OUTPUT
+          echo "ZIP=$FILE2" >> $GITHUB_OUTPUT
+          echo "TEST_NOLIB_SIZE=$(stat -c%s "$FILE1")" >> $GITHUB_OUTPUT
+          echo "TEST_LIBS_SIZE=$(stat -c%s "$FILE2")" >> $GITHUB_OUTPUT
+
+      - name: Upload DeviceLayoutPreset ZIP
+        uses: actions/upload-artifact@v4
+        id: upload-zips-standard
+        with:
+          name: pr-pkg
+          path: ${{ steps.capture-filenames.outputs.ZIP }}
+
+      - name: Upload DeviceLayoutPreset Nolib ZIP
+        uses: actions/upload-artifact@v4
+        id: upload-zips-nolib
+        with:
+          name: pr-pkg-nolib
+          path: ${{ steps.capture-filenames.outputs.NOLIBZIP }}
+
+      - name: Post PR comment
+        if: env.IS_FORK == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/post-pkg-comment.cjs');
+            await script({
+              github,
+              context,
+              libsUrl: "${{ steps.upload-zips-standard.outputs.artifact-url }}",
+              noLibUrl: "${{ steps.upload-zips-nolib.outputs.artifact-url }}",
+              latestReleaseStandardSize: ${{ steps.fetch-release-assets.outputs.LATEST_RELEASE_LIBS_SIZE }},
+              testPkgStandardSize: ${{ steps.capture-filenames.outputs.TEST_LIBS_SIZE }},
+              latestReleaseNoLibSize: ${{ steps.fetch-release-assets.outputs.LATEST_RELEASE_NOLIB_SIZE }},
+              testPkgNoLibSize: ${{ steps.capture-filenames.outputs.TEST_NOLIB_SIZE }},
+            });
+
+  commitlint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TITLE: ${{ github.event.pull_request.title }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install commitlint
+        run: |
+          npm install @commitlint/config-conventional @commitlint/cli
+          echo "export default {extends: ['@commitlint/config-conventional']};" > commitlint.config.js
+
+      - name: Run commitlint (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "${TITLE}" | npx commitlint
+
+      - name: Run commitlint (Merge Group)
+        if: ${{ github.event_name == 'merge_group' }}
+        run: npx commitlint --last
+
+  all_pr_checks:
+    name: Passing PR Checks
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [test_package, commitlint]
+    steps:
+      - name: Export needs results as JSON
+        id: export-needs
+        run: echo '${{ toJSON(needs) }}' > needs.json
+
+      - name: Check if all jobs passed or were skipped
+        run: |
+          needs=$(cat needs.json)
+          for job in $(echo "$needs" | jq -r 'keys[]'); do
+            result=$(echo "$needs" | jq -r ".\"$job\".result")
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+              echo "Job $job failed."
+              exit 1
+            fi
+          done
+          echo "All jobs passed or were skipped."
+        shell: bash
