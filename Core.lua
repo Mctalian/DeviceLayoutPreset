@@ -137,6 +137,7 @@ local defaults = {
     char = {
         specs = {
             enabled = false,
+            overrides = {}
         }
     },
 }
@@ -171,20 +172,18 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
 
     local desired = self.db.global.presetIndexOnLogin
     local type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
-    if self.db.char.specs.enabled then
-        local specId = PlayerUtil.GetCurrentSpecID()
-        if self.db.char.specs[specId] ~= nil then
-            desired = self.db.char.specs[specId]
-            type = G_DLP.L["LAYOUT_TYPE_SPEC"]
-        else
-            self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
-            self.db.char.specs[specId] = SPEC_DEFAULT
-            return
-        end
-        if desired == SPEC_DEFAULT then
-            desired = self.db.global.presetIndexOnLogin
-            type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
-        end
+    local specId = PlayerUtil.GetCurrentSpecID()
+    if self.db.char.specs.overrides[specId] ~= nil then
+        desired = self.db.char.specs[specId]
+        type = G_DLP.L["LAYOUT_TYPE_SPEC"]
+    else
+        self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
+        self.db.char.specs.overrides[specId] = SPEC_DEFAULT
+        return
+    end
+    if desired == SPEC_DEFAULT then
+        desired = self.db.global.presetIndexOnLogin
+        type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
     end
     layouts = EditModeManagerFrame:GetLayouts()
     if desired <= DEVICE_DEFAULT or desired > #layouts then
@@ -203,22 +202,28 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     self:UnregisterBucket(self.bucketHandle)
 end
 
-function DLP:PLAYER_SPECIALIZATION_CHANGED()
+---On talent spec changes, load the spec override layout or the default device layout if no override is set
+---@param eventName string
+---@param unitTarget UnitToken 
+function DLP:PLAYER_SPECIALIZATION_CHANGED(eventName, unitTarget)
+    if unitTarget ~= "player" then
+        return
+    end
     local type = G_DLP.L["LAYOUT_TYPE_SPEC"]
     local specId = PlayerUtil.GetCurrentSpecID()
-    if self.db.char.specs[specId] == nil then
-        self.db.char.specs[specId] = SPEC_DEFAULT
+    if self.db.char.specs.overrides[specId] == nil then
+        self.db.char.specs.overrides[specId] = SPEC_DEFAULT
         return
     end
     layouts = EditModeManagerFrame:GetLayouts()
-    local desired = self.db.char.specs[specId]
+    local desired = self.db.char.specs.overrides[specId]
     if desired == SPEC_DEFAULT then
         desired = self.db.global.presetIndexOnLogin
         type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
     end
     if desired <= DEVICE_DEFAULT or desired > #layouts then
         self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
-        self.db.char.specs[specId] = SPEC_DEFAULT
+        self.db.char.specs.overrides[specId] = SPEC_DEFAULT
     else
         EditModeManagerFrame:SelectLayout(desired)
         self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], type, layouts[desired].layoutName)
@@ -257,8 +262,8 @@ function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
     local i = 0
     for k, v in pairs(self.specs) do
         i = i + 1
-        if self.db.char.specs[k] == nil then
-            self.db.char.specs[k] = SPEC_DEFAULT
+        if self.db.char.specs.overrides[k] == nil then
+            self.db.char.specs.overrides[k] = SPEC_DEFAULT
         end
         options.args.specs.args["spec" .. k] = {
             type = "select",
@@ -268,10 +273,10 @@ function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
                 return DLP:GetLayouts(true)
             end,
             get = function()
-                return DLP.db.char.specs[k]
+                return DLP.db.char.specs.overrides[k]
             end,
             set = function(info, value)
-                DLP.db.char.specs[k] = value
+                DLP.db.char.specs.overrides[k] = value
             end,
             width = 1.5,
             order = 1 + i
