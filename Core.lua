@@ -136,7 +136,6 @@ local defaults = {
     },
     char = {
         specs = {
-            enabled = false,
             overrides = {}
         }
     },
@@ -239,6 +238,10 @@ end
 ---@field specPrimaryStat number
 ---@field specAtlasString string
 
+---On initial login, get the specs and create the spec override options
+---@param event string
+---@param isLogin boolean
+---@param isReload boolean
 function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
     local numSpecs = GetNumSpecializations()
     ---@type table<number, Spec>
