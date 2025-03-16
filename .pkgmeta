@@ -15,6 +15,7 @@ externals:
 ignore:
   - README.md
   - "*.json"
+  - DeviceLayoutPreset_logo.png
   - node_modules
 
 github-release-as-changelog: yes
