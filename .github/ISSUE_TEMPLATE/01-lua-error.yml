@@ -42,5 +42,5 @@ body:
     id: additional-information
     attributes:
       label: Additional Information
-      description: Any additional context, screenshots, or logs (`/rlf log` in game).
+      description: Any additional context, screenshots, etc.
       placeholder: Add any other context about the problem here.
