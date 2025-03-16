@@ -1,5 +1,7 @@
 # DeviceLayoutPreset
 
+<img src="DeviceLayoutPreset_logo.png" alt="wow-build-tools" width="400">
+
 An addon for World of Warcraft to make playing on different devices a little easier.
 
 _Do you play WoW on a PC and a laptop? Perhaps you've been playing on SteamDeck or another handheld? Are you annoyed that when you switch between these devices, the first thing you need to do is open "Edit Mode" and select the correct preset?_
