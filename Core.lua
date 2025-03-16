@@ -173,12 +173,12 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     local type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
     local specId = PlayerUtil.GetCurrentSpecID()
     if self.db.char.specs.overrides[specId] ~= nil then
-        desired = self.db.char.specs[specId]
+        desired = self.db.char.specs.overrides[specId]
         type = G_DLP.L["LAYOUT_TYPE_SPEC"]
     else
         self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
         self.db.char.specs.overrides[specId] = SPEC_DEFAULT
-        return
+        desired = SPEC_DEFAULT
     end
     if desired == SPEC_DEFAULT then
         desired = self.db.global.presetIndexOnLogin
@@ -212,7 +212,6 @@ function DLP:PLAYER_SPECIALIZATION_CHANGED(eventName, unitTarget)
     local specId = PlayerUtil.GetCurrentSpecID()
     if self.db.char.specs.overrides[specId] == nil then
         self.db.char.specs.overrides[specId] = SPEC_DEFAULT
-        return
     end
     layouts = EditModeManagerFrame:GetLayouts()
     local desired = self.db.char.specs.overrides[specId]

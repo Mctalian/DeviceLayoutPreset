@@ -14,12 +14,7 @@
         "preset": "conventionalcommits"
       }
     ],
-    [
-      "@semantic-release/github",
-      {
-        "discussionCategoryName": "Announcements"
-      }
-    ]
+    "@semantic-release/github"
   ],
   "preset": "conventionalcommits"
 }
