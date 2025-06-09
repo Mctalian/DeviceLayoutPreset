@@ -21,6 +21,7 @@ L["OPTIONS_SPECS_PRESET_DESC"] = "The Edit Mode preset to load in %s spec."
 L["DO_NOT_OVERRIDE"] = "Same as default preset"
 
 L["ERROR_NO_LAYOUT_INFO"] = "There was an issue retrieving layoutInfo on startup, please report this issue on github"
+L["ERROR_NO_SPEC_INFO"] = "There was an issue retrieving specInfo on startup, please report this issue on github"
 L["ERROR_LAYOUT_INVALID"] = "No valid layout found. Visit the addon options (/dlp) to select a valid Edit Mode preset."
 
 L["LAYOUT_TYPE_DEVICE"] = "Device"

@@ -57,6 +57,9 @@ local SPEC_FORMAT_STRINGS = {
 
 ---@type AceConfigDialog-3.0
 local acd = LibStub("AceConfigDialog-3.0")
+---@type AceConfigRegistry-3.0
+local acr = LibStub("AceConfigRegistry-3.0")
+
 
 local options = {
     name = addonName,
@@ -66,6 +69,7 @@ local options = {
         desc = {
             type = "description",
             name = G_DLP.L["OPTIONS_DESC"],
+            image = "Interface/AddOns/DeviceLayoutPreset/Icons/logo",
             order = 0
         },
         howToDesc = {
@@ -170,11 +174,15 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     end
 
     local desired = self.db.global.presetIndexOnLogin
-    local type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
+    local layoutType = G_DLP.L["LAYOUT_TYPE_DEVICE"]
     local specId = PlayerUtil.GetCurrentSpecID()
+    if specId == nil then
+        self:Print(G_DLP.L["ERROR_NO_SPEC_INFO"])
+        return
+    end
     if self.db.char.specs.overrides[specId] ~= nil then
         desired = self.db.char.specs.overrides[specId]
-        type = G_DLP.L["LAYOUT_TYPE_SPEC"]
+        layoutType = G_DLP.L["LAYOUT_TYPE_SPEC"]
     else
         self:Print(G_DLP.L["ERROR_LAYOUT_INVALID"])
         self.db.char.specs.overrides[specId] = SPEC_DEFAULT
@@ -182,7 +190,7 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
     end
     if desired == SPEC_DEFAULT then
         desired = self.db.global.presetIndexOnLogin
-        type = G_DLP.L["LAYOUT_TYPE_DEVICE"]
+        layoutType = G_DLP.L["LAYOUT_TYPE_DEVICE"]
     end
     layouts = EditModeManagerFrame:GetLayouts()
     if desired <= DEVICE_DEFAULT or desired > #layouts then
@@ -190,7 +198,7 @@ function DLP:EDIT_MODE_LAYOUTS_UPDATED(bucketedArgs)
         self.db.global.presetIndexOnLogin = DEVICE_DEFAULT
     elseif layoutInfo.activeLayout ~= desired then
         EditModeManagerFrame:SelectLayout(desired)
-        self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], type, layouts[desired].layoutName)
+        self:Printf(G_DLP.L["SUCCESS_LOADED_LAYOUT"], layoutType, layouts[desired].layoutName)
     else
         local isNewVersion = currentVersion ~= self.db.global.lastVersionLoaded
         if isNewVersion then
@@ -210,6 +218,10 @@ function DLP:PLAYER_SPECIALIZATION_CHANGED(eventName, unitTarget)
     end
     local type = G_DLP.L["LAYOUT_TYPE_SPEC"]
     local specId = PlayerUtil.GetCurrentSpecID()
+    if specId == nil then
+        self:Print(G_DLP.L["ERROR_NO_SPEC_INFO"])
+        return
+    end
     if self.db.char.specs.overrides[specId] == nil then
         self.db.char.specs.overrides[specId] = SPEC_DEFAULT
     end
@@ -291,7 +303,7 @@ function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
         }
     end
 
-    LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+    acr:NotifyChange(addonName)
 end
 
 function DLP:OnLayoutDeleted(deletedIndex)
@@ -299,12 +311,12 @@ function DLP:OnLayoutDeleted(deletedIndex)
         self:Print(G_DLP.L["EVENT_DELETED_LAYOUT"])
         self.db.global.presetIndexOnLogin = DEVICE_DEFAULT
     end
-    LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+    acr:NotifyChange(addonName)
 end
 
 function DLP:OnLayoutAdded()
     self:Print(G_DLP.L["EVENT_CREATED_LAYOUT"])
-    LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+    acr:NotifyChange(addonName)
 end
 
 ---Get EditMode layouts
