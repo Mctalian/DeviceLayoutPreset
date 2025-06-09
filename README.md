@@ -1,6 +1,6 @@
 # DeviceLayoutPreset
 
-<img src="DeviceLayoutPreset_logo.png" alt="wow-build-tools" width="400">
+<img src="DLP_logo.png" alt="Device Layout Preset logo" width="400">
 
 An addon for World of Warcraft to make playing on different devices a little easier.
 
