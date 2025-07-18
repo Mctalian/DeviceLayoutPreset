@@ -44,7 +44,7 @@
   },
   "wowAPI.luals.frameXML": true,
   "Lua.workspace.library": [
-    "~/.vscode-server/extensions/ketho.wow-api-0.20.7/Annotations/Core",
-    "~/.vscode-server/extensions/ketho.wow-api-0.20.7/Annotations/FrameXML"
+    "~/.vscode-server/extensions/ketho.wow-api-0.20.8/Annotations/Core",
+    "~/.vscode-server/extensions/ketho.wow-api-0.20.8/Annotations/FrameXML"
   ]
 }

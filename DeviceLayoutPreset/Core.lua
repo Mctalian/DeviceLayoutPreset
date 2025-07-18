@@ -254,11 +254,18 @@ end
 ---@param isLogin boolean
 ---@param isReload boolean
 function DLP:PLAYER_ENTERING_WORLD(event, isLogin, isReload)
-    local numSpecs = GetNumSpecializations()
+    local _, _, classID = UnitClass("player")
+    local numSpecs = C_SpecializationInfo.GetNumSpecializationsForClassID(classID)
     ---@type table<number, Spec>
     self.specs = {}
     for i = 1, numSpecs do
-        local specID, specName, specDesc, specIcon, specRole, specPrimaryStat = GetSpecializationInfo(i)
+        local specID, specName, specDesc, specIcon, specRole, specPrimaryStat
+        if C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo then
+            specID, specName, specDesc, specIcon, specRole, specPrimaryStat = C_SpecializationInfo.GetSpecializationInfo(i, false, false)
+        else
+            -- GetSpecializationInfo is deprecated starting in 11.2.0
+            specID, specName, specDesc, specIcon, specRole, specPrimaryStat = GetSpecializationInfo(i)
+        end
         self.specs[specID] = {
             specId = specID,
             specName = specName,

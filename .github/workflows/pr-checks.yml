@@ -45,22 +45,17 @@ jobs:
           # echo "LATEST_RELEASE_NOLIB_SIZE=$nolib_size" >> $GITHUB_OUTPUT
           echo "LATEST_RELEASE_LIBS_SIZE=$lib_size" >> $GITHUB_OUTPUT
 
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: subversion
-          version: test_package_apt_cache
-
       - name: Package
         if: env.IS_FORK == 'false'
         uses: McTalian/wow-build-tools@v1-beta
         with:
-          args: -d --skipChangelog
+          args: -d -t ./DeviceLayoutPreset -r ./.release --skipChangelog
 
       - name: Package (fork)
         if: env.IS_FORK == 'true'
         uses: McTalian/wow-build-tools@v1-beta
         with:
-          args: -d --skipChangelog -n {package-name}-pr${{github.event.number}}-{nolib}{classic}
+          args: -d -t ./DeviceLayoutPreset -r ./.release --skipChangelog -n {package-name}-pr${{github.event.number}}-{nolib}{classic}
 
       - name: Capture Filenames
         id: capture-filenames

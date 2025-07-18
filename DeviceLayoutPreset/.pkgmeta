@@ -12,10 +12,4 @@ externals:
   Libs/AceBucket-3.0: https://repos.wowace.com/wow/ace3/trunk/AceBucket-3.0
   Libs/AceLocale-3.0: https://repos.wowace.com/wow/ace3/trunk/AceLocale-3.0
 
-ignore:
-  - README.md
-  - "*.json"
-  - DLP_logo.png
-  - node_modules
-
 github-release-as-changelog: yes
