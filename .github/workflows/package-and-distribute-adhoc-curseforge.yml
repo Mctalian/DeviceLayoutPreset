@@ -1,4 +1,4 @@
-name: Package and release
+name: Package and release (CF)
 
 on:
   workflow_dispatch: {}
@@ -23,3 +23,5 @@ jobs:
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
         uses: McTalian/wow-build-tools@v1-beta
+        with:
+          args: -t ./DeviceLayoutPreset -r ./.release
