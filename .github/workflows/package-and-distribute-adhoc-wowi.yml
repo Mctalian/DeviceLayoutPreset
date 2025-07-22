@@ -1,0 +1,25 @@
+name: Package and release
+
+on:
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Package and distribute
+        env:
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+        uses: McTalian/wow-build-tools@v1-beta
