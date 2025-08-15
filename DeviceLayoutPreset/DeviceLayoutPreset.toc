@@ -1,4 +1,4 @@
-## Interface: 110200
+## Interface: 110200, 110205
 ## Title: Device Layout Preset
 ## Author: McTalian
 ## Version: @project-version@
